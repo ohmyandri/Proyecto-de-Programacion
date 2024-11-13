@@ -36,7 +36,7 @@ void clean_string(char *string) {
 int main() {
     FILE *input = fopen("correos.txt", "r");
     FILE *archivo_importante = fopen("importantes.txt", "w");
-    FILE *archivo_no_importantes = fopen("no_importantes.txt", "w");
+    FILE *archivo_no_importantes = fopen("correos_organizados.txt", "w");
 
     if (!input || !archivo_importante || !archivo_no_importantes) {
         printf("Error al abrir los archivos.\n");
