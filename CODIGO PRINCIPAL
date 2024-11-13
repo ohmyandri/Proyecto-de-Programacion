@@ -1,0 +1,102 @@
+#include <stdio.h>
+#include <string.h>
+
+#define MAX_LENGTH 300
+#define MAX_MESSAGE_LENGTH 300 // Límite para la longitud del mensaje
+#define MAX_FIELD_LENGTH 100 // Límite para otros campos
+
+// Función para clasificar y formatear el correo
+void classify_email(char remitente[], char destinatario[], char hora[], char mensaje[], char palabras_clave[][MAX_LENGTH], int contador_p_clave, FILE *archivo_importante, FILE *archivo_no_importantes) {
+    int is_important = 0;
+
+    // Verificar si alguna palabra clave está en el mensaje
+    for (int i = 0; i < contador_p_clave; i++) {
+        if (strstr(mensaje, palabras_clave[i]) != NULL) {
+            is_important = 1;
+            break;
+        }
+    }
+
+    // Escribir en el archivo adecuado con el formato solicitado
+    FILE *output = is_important ? archivo_importante : archivo_no_importantes;
+    fprintf(output, "%s\n", remitente);
+    fprintf(output, "%s\n", destinatario);
+    fprintf(output, "%s\n", hora);
+    fprintf(output, "%s\n\n", mensaje);
+}
+
+// Función para limpiar el salto de línea y los espacios en blanco al final de la cadena
+void clean_string(char *string) {
+    size_t len = strlen(string);
+    if (len > 0 && string[len - 1] == '\n') {
+        string[len - 1] = '\0'; // Reemplaza el salto de línea por un terminador de cadena
+    }
+}
+
+int main() {
+    FILE *input = fopen("correos.txt", "r");
+    FILE *archivo_importante = fopen("importantes.txt", "w");
+    FILE *archivo_no_importantes = fopen("no_importantes.txt", "w");
+
+    if (!input || !archivo_importante || !archivo_no_importantes) {
+        printf("Error al abrir los archivos.\n");
+        return 1;
+    }
+
+    char palabras_clave[5][MAX_LENGTH];
+    int contador_p_clave;
+
+    printf("Ingrese el número de palabras o cadenas clave (max 5): ");
+    scanf("%d", &contador_p_clave);
+    getchar(); // Para consumir el salto de línea residual
+
+    if (contador_p_clave > 5) {
+        printf("Solo puede ingresar hasta 5 palabras o cadenas clave.\n");
+        return 1;
+    }
+
+    printf("Ingrese las palabras o cadenas clave:\n");
+    for (int i = 0; i < contador_p_clave; i++) {
+        fgets(palabras_clave[i], MAX_LENGTH, stdin);
+        clean_string(palabras_clave[i]); // Limpiar saltos de línea
+    }
+
+    char line[MAX_LENGTH];
+    char remitente[MAX_FIELD_LENGTH]; // De
+    char destinatario[MAX_FIELD_LENGTH]; // Para
+    char hora[MAX_FIELD_LENGTH]; // Hora
+    char mensaje[MAX_LENGTH]; // Mensaje
+
+    while (fgets(line, sizeof(line), input)) {
+        // Leer De
+        clean_string(line);
+        strcpy(remitente, line);
+
+        // Leer Para
+        fgets(line, sizeof(line), input);
+        clean_string(line);
+        strcpy(destinatario, line);
+
+        // Leer Hora
+        fgets(line, sizeof(line), input);
+        clean_string(line);
+        strcpy(hora, line);
+
+        // Leer Mensaje
+        strcpy(mensaje, ""); // Limpiar mensaje
+        while (fgets(line, sizeof(line), input) && strcmp(line, "\n") != 0) {
+            strcat(mensaje, line); // Agregar la línea al mensaje
+        }
+        clean_string(mensaje); // Limpiar mensaje final
+
+        // Clasificar el correo
+        classify_email(remitente, destinatario, hora, mensaje, palabras_clave, contador_p_clave, archivo_importante, archivo_no_importantes);
+    }
+
+    fclose(input);
+    fclose(archivo_importante);
+    fclose(archivo_no_importantes);
+
+    printf("Clasificación de correos completada.\n");
+    return 0;
+}
